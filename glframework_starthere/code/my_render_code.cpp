@@ -32,6 +32,7 @@ namespace Box {
 
 namespace Scene {
 	int sceneN = 0;
+	void changeScene(int newScene);	//TODO: QUE ES CRIDI QUAN APRETES ELS NUMEROS - I QUE CRIDI EL RESET()
 }
 
 //Values used for the projection view
@@ -62,6 +63,11 @@ namespace RenderVars {
 	}
 	//Resets the camera position and rotation to the original values
 	void reset() {
+		panv[0] = 0.f;
+		panv[1] = -5.f;
+		panv[2] = -15.f;
+		rota[0] = 0.f;
+		rota[1] = 0.f;
 	}
 }
 namespace RV = RenderVars;
@@ -75,7 +81,7 @@ void GLinit(int width, int height) {
 	glEnable(GL_CULL_FACE);
 
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
-
+	//TODO: CANVIAR PER ORTHO
 
 	Box::setupCube();
 	Axis::setupAxis();

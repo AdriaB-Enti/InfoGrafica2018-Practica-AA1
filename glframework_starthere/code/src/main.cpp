@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 		ImGuiIO& io = ImGui::GetIO();
 		
 		//Detect keyboard controls
-		if (!io.WantCaptureKeyboard) {
+		if (!io.WantCaptureKeyboard) {			//TODO: POSAR A MY RENDER CODE----------------------------------
 			if (io.KeysDown[49]) {
 				std::cout << "1 APRETAT" << std::endl;
 			}
