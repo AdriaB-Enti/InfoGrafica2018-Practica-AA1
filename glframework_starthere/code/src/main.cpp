@@ -4,6 +4,7 @@
 #include <imgui\imgui.h>
 #include <imgui\imgui_impl_sdl_gl3.h>
 #include <cstdio>
+#include <iostream>
 
 #include "GL_framework.h"
 
@@ -118,7 +119,20 @@ int main(int argc, char** argv) {
 
 		ImGuiIO& io = ImGui::GetIO();
 		
-		
+		//Detect keyboard controls
+		if (!io.WantCaptureKeyboard) {
+			if (io.KeysDown[49]) {
+				std::cout << "1 APRETAT" << std::endl;
+			}
+			if (io.KeysDown[50]) {
+				std::cout << "2 APRETAT" << std::endl;
+			}
+			if (io.KeysDown[51]) {
+				std::cout << "3 APRETAT" << std::endl;
+			}
+		}
+
+
 		GUI();
 		//PhysicsUpdate((float)expected_frametime);
 		
