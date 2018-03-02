@@ -8,7 +8,7 @@ bool renderCapsule = true;
 bool renderParticles = false;
 bool renderCloth = false;
 bool renderCube = true;
-
+/*
 namespace Sphere {
 	extern void setupSphere(glm::vec3 pos = glm::vec3(0.f, 1.f, 0.f), float radius = 1.f);
 	extern void cleanupSphere();
@@ -77,3 +77,5 @@ void renderPrims() {
 	if (renderCube)
 		Cube::drawCube();
 }
+
+*/
