@@ -4,7 +4,6 @@
 #include <imgui\imgui.h>
 #include <imgui\imgui_impl_sdl_gl3.h>
 #include <cstdio>
-#include <iostream>
 
 #include "GL_framework.h"
 
@@ -116,21 +115,6 @@ int main(int argc, char** argv) {
 			}
 		}
 		ImGui_ImplSdlGL3_NewFrame(mainwindow);
-
-		ImGuiIO& io = ImGui::GetIO();
-		
-		//Detect keyboard controls
-		if (!io.WantCaptureKeyboard) {			//TODO: POSAR A MY RENDER CODE----------------------------------
-			if (io.KeysDown[49]) {
-				std::cout << "1 APRETAT" << std::endl;
-			}
-			if (io.KeysDown[50]) {
-				std::cout << "2 APRETAT" << std::endl;
-			}
-			if (io.KeysDown[51]) {
-				std::cout << "3 APRETAT" << std::endl;
-			}
-		}
 
 
 		GUI();

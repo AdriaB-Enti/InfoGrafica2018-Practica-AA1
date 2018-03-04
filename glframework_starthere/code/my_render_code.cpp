@@ -1,10 +1,13 @@
-
+#pragma once
 #include <GL\glew.h>
 #include <glm\gtc\type_ptr.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 
 #include <cstdio>
 #include <cassert>
+
+#include <imgui\imgui.h>
+#include <iostream>
 
 #include "GL_framework.h"
 
@@ -119,6 +122,22 @@ void GLrender(double currentTime) {
 
 
 	ImGui::Render();
+
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	//Detect keyboard controls
+	if (!io.WantCaptureKeyboard) {			//TODO: detectar només quan comences a apretar
+		if (io.KeysDown[49]) {
+			std::cout << "1 APRETAT" << std::endl;
+		}
+		if (io.KeysDown[50]) {
+			std::cout << "2 APRETAT" << std::endl;
+		}
+		if (io.KeysDown[51]) {
+			std::cout << "3 APRETAT" << std::endl;
+		}
+	}
 }
 
 void GLResize(int width, int height) {
