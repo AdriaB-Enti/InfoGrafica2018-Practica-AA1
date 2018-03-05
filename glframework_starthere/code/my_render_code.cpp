@@ -8,6 +8,7 @@
 
 #include <imgui\imgui.h>
 #include <iostream>
+#include <array>
 
 #include "GL_framework.h"
 
@@ -23,6 +24,7 @@ namespace Cube {
 	void cleanupCube();
 	void updateCube(const glm::mat4& transform);
 	void drawCube();
+	void drawCubes();
 	void draw2Cubes(double currentTime);
 }
 namespace Axis {
@@ -129,7 +131,7 @@ namespace Scene {
 	void renderScene3() {
 		RV::_modelView = glm::mat4(1.f);
 		RV::travelling(glm::vec3(0, 0, 0.05f)); //moving the "camera" into the scene
-		RV::changeFOV(glm::radians(0.2f));
+		RV::changeFOV(glm::radians(0.16f)); //0.2
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
@@ -138,7 +140,7 @@ namespace Scene {
 		//Draw The big box, the axis and cube
 		Box::drawCube();
 		Axis::drawAxis();
-		Cube::drawCube();
+		Cube::drawCubes();
 	}
 
 	void detectInput() {
@@ -199,7 +201,6 @@ void GLrender(double currentTime) {
 		break;
 	case 2: Scene::renderScene3();
 		break;
-
 	default: //shouldn't happen
 		break;
 	}
@@ -405,8 +406,40 @@ void main() {\n\
 		glBindVertexArray(0);
 		glDisable(GL_PRIMITIVE_RESTART);
 	}
+	void drawCubes() {	//TODO: potser millor posar en una array i fer un bucle
+		const std::array<glm::vec3, 3> cubePositions = { glm::vec3(-0.0f, 2.5f, 0.0f), glm::vec3(-5.0f, 2.5f, -3.0f), glm::vec3(1.0f, 0.5f, -3.0f) };
+		const std::array<glm::vec3, 3> cubeScales = { glm::vec3(4, 4, 4), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1) };
+		glm::vec3 firstCubePos = glm::vec3(-0.0f, 2.5f, 0.0f);	//posició del primer cub
+		glm::vec3 secondCubePos = glm::vec3(-5.0f, 2.5f, -3.0f);
+		glm::vec3 thirdCubePos = glm::vec3(1.0f, 0.5f, -3.0f);
+		glEnable(GL_PRIMITIVE_RESTART);
+		glBindVertexArray(cubeVao);
+		glUseProgram(cubeProgram);
+		for (int i = 0; i < std::size(cubePositions); i++)
+		{
+			objMat = glm::translate(glm::mat4(1.0f), cubePositions[i]);
+			objMat = glm::scale(objMat, cubeScales[i]);
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
+			glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+			glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+		}
+		//cube1
+		//objMat = glm::scale(objMat, glm::vec3(4,4,4));
+		/*objMat = glm::translate(glm::mat4(1.0f), firstCubePos);
+		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
+		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
+		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
+		glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+		glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+		*/
+		glUseProgram(0);
+		glBindVertexArray(0);
+		glDisable(GL_PRIMITIVE_RESTART);
+	}
 	//Draws two cubes
-	void Cube::draw2Cubes(double currentTime) {				//no tenim "objectes", tenim vertexs i poligons, que no els tenim repetits, sino que els dibuixem en dos llocs diferents (es el mateix cub)
+	void Cube::draw2Cubes(double currentTime) {				//potser s'hauria d'esborrar....
 		glEnable(GL_PRIMITIVE_RESTART);
 		glBindVertexArray(cubeVao);
 		glUseProgram(cubeProgram);
