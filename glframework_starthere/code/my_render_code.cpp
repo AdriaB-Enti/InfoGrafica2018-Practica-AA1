@@ -49,6 +49,7 @@ namespace RenderVars {
 	const float FOV = glm::radians(80.f);
 	const float zNear = 0.01f;
 	const float zFar = 70.f;
+	float currentFOV = FOV;
 
 	glm::mat4 _projection;
 	glm::mat4 _modelView;
@@ -62,22 +63,28 @@ namespace RenderVars {
 		bool waspressed = false;
 	} prevMouse;
 
-	float panv[3] = { 0.f, -5.f, -15.f };		//"camara" position
-	float rota[2] = { 0.f, 0.f };				//"camara" rotation
-
+	float panv[3] = { 0.f, -5.f, -15.f };		//"camera" position
+	float rota[2] = { 0.f, 0.f };				//"camera" rotation
+	//Translates the world by the given vector3
 	void travelling(glm::vec3 displacement) {
 		panv[0] += displacement.x;
 		panv[1] += displacement.y;
 		panv[2] += displacement.z;
 	}
-	//Resets the camera position and rotation to the original values. Also sets perspective or ortogtaphic depending on the scene
+	//increases or decreases FOV by the given value (radians)
+	void changeFOV(float change) {
+		currentFOV += change;
+		_projection = glm::perspective(currentFOV, (float)lastWidth / (float)lastHeight, zNear, zFar);
+	}
+	//Resets the "camera" position and rotation to the original values. Also sets perspective or ortogtaphic depending on the scene
 	void reset() {
 		panv[0] = 0.f;
 		panv[1] = -5.f;
 		panv[2] = -15.f;
 		rota[0] = 0.f;
 		rota[1] = 0.f;
-		if (Scene::currentScene == 1)
+		currentFOV = FOV;
+		if (Scene::currentScene == 0)
 		{
 			_projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, zNear, zFar);
 		}
@@ -89,30 +96,73 @@ namespace RenderVars {
 }
 namespace RV = RenderVars;
 
-void Scene::renderScene1() {
+namespace Scene {
+	void renderScene1() {
+		RV::_modelView = glm::mat4(1.f);
+		RV::travelling(glm::vec3(0.06f, 0, 0));	//lateral travelling
+		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
+		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
+		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
-}
+		RV::_MVP = RV::_projection * RV::_modelView;
+		//Draw The big box, the axis and cube
+		Box::drawCube();
+		Axis::drawAxis();
+		Cube::drawCube();
+	}
 
-void Scene::detectInput() {
-	//Detect keyboard input to change scene
-	ImGuiIO& io = ImGui::GetIO();
-	if (!io.WantCaptureKeyboard) {
-		if (io.KeysDown[49] && Scene::currentScene != 0) {		// Key 1
-			Scene::currentScene = 0;
-			RV::reset();
-			std::cout << "Changing to scene 1" << std::endl;
-		}
-		if (io.KeysDown[50] && Scene::currentScene != 1) {		// Key 2
-			Scene::currentScene = 1;
-			RV::reset();
-			std::cout << "Changing to scene 2" << std::endl;
-		}
-		if (io.KeysDown[51] && Scene::currentScene != 2) {		// Key 3
-			Scene::currentScene = 2;
-			RV::reset();
-			std::cout << "Changing to scene 3" << std::endl;
+	void renderScene2() {
+		RV::_modelView = glm::mat4(1.f);
+		RV::travelling(glm::vec3(0, 0, 0.05f)); //moving the "camera" into the scene
+		RV::changeFOV(glm::radians(-0.2f));		//changing FOV (zooming in)
+		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
+		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
+		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
+
+		RV::_MVP = RV::_projection * RV::_modelView;
+		//Draw The big box, the axis and cube
+		Box::drawCube();
+		Axis::drawAxis();
+		Cube::drawCube();
+	}
+
+	void renderScene3() {
+		RV::_modelView = glm::mat4(1.f);
+		RV::travelling(glm::vec3(0, 0, 0.05f)); //moving the "camera" into the scene
+		RV::changeFOV(glm::radians(0.2f));
+		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
+		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
+		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
+
+		RV::_MVP = RV::_projection * RV::_modelView;
+		//Draw The big box, the axis and cube
+		Box::drawCube();
+		Axis::drawAxis();
+		Cube::drawCube();
+	}
+
+	void detectInput() {
+		//Detect keyboard input to change scene
+		ImGuiIO& io = ImGui::GetIO();
+		if (!io.WantCaptureKeyboard) {
+			if (io.KeysDown[49] && Scene::currentScene != 0) {		// Key 1
+				Scene::currentScene = 0;
+				RV::reset();
+				std::cout << "Changing to scene 1" << std::endl;
+			}
+			if (io.KeysDown[50] && Scene::currentScene != 1) {		// Key 2
+				Scene::currentScene = 1;
+				RV::reset();
+				std::cout << "Changing to scene 2" << std::endl;
+			}
+			if (io.KeysDown[51] && Scene::currentScene != 2) {		// Key 3
+				Scene::currentScene = 2;
+				RV::reset();
+				std::cout << "Changing to scene 3" << std::endl;
+			}
 		}
 	}
+
 }
 
 void GLinit(int width, int height) {
@@ -122,7 +172,7 @@ void GLinit(int width, int height) {
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
+	RV::_projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, RV::zNear, RV::zFar);
 
 	Box::setupCube();
 	Axis::setupAxis();
@@ -141,30 +191,32 @@ void GLcleanup() {
 void GLrender(double currentTime) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	RV::_modelView = glm::mat4(1.f);
-	RV::travelling(glm::vec3(0.1f,0,0));
-	RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
-	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
-	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
+	switch (Scene::currentScene)
+	{
+	case 0: Scene::renderScene1();
+		break;
+	case 1: Scene::renderScene2();
+		break;
+	case 2: Scene::renderScene3();
+		break;
 
-	RV::_MVP = RV::_projection * RV::_modelView;
-
-	//Draw The big box and the axis
-	Box::drawCube();
-	Axis::drawAxis();
-
-	// render code
-	Cube::drawCube();
+	default: //shouldn't happen
+		break;
+	}
 
 	ImGui::Render();
-
 	Scene::detectInput();
 }
-//TODO: canviar segons convingui
+
 void GLResize(int width, int height) {
 	glViewport(0, 0, width, height);
-	if (height != 0) RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
-	else RV::_projection = glm::perspective(RV::FOV, 0.f, RV::zNear, RV::zFar);
+	if (height != 0) {
+		if (Scene::currentScene == 0) 
+			RV::_projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, RV::zNear, RV::zFar);
+		else 
+			RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
+	}
+	else { RV::_projection = glm::perspective(RV::FOV, 0.f, RV::zNear, RV::zFar); }
 }
 
 void myInitCode() {
