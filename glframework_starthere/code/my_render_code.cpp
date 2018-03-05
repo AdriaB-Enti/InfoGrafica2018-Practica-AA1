@@ -11,6 +11,9 @@
 
 #include "GL_framework.h"
 
+//Global variables
+float lastWidth, lastHeight;	//width and Height values used on init
+
 //Forward declarations
 namespace ImGui {
 	void Render();
@@ -34,8 +37,11 @@ namespace Box {
 }
 
 namespace Scene {
-	int sceneN = 0;
-	void changeScene(int newScene);	//TODO: QUE ES CRIDI QUAN APRETES ELS NUMEROS - I QUE CRIDI EL RESET()
+	int currentScene = 0;
+	void renderScene1();
+	void renderScene2();
+	void renderScene3();
+	void detectInput();
 }
 
 //Values used for the projection view
@@ -64,16 +70,50 @@ namespace RenderVars {
 		panv[1] += displacement.y;
 		panv[2] += displacement.z;
 	}
-	//Resets the camera position and rotation to the original values
+	//Resets the camera position and rotation to the original values. Also sets perspective or ortogtaphic depending on the scene
 	void reset() {
 		panv[0] = 0.f;
 		panv[1] = -5.f;
 		panv[2] = -15.f;
 		rota[0] = 0.f;
 		rota[1] = 0.f;
+		if (Scene::currentScene == 1)
+		{
+			_projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, zNear, zFar);
+		}
+		else
+		{
+			_projection = glm::perspective(FOV, (float)lastWidth / (float)lastHeight, zNear, zFar);
+		}
 	}
 }
 namespace RV = RenderVars;
+
+void Scene::renderScene1() {
+
+}
+
+void Scene::detectInput() {
+	//Detect keyboard input to change scene
+	ImGuiIO& io = ImGui::GetIO();
+	if (!io.WantCaptureKeyboard) {
+		if (io.KeysDown[49] && Scene::currentScene != 0) {		// Key 1
+			Scene::currentScene = 0;
+			RV::reset();
+			std::cout << "Changing to scene 1" << std::endl;
+		}
+		if (io.KeysDown[50] && Scene::currentScene != 1) {		// Key 2
+			Scene::currentScene = 1;
+			RV::reset();
+			std::cout << "Changing to scene 2" << std::endl;
+		}
+		if (io.KeysDown[51] && Scene::currentScene != 2) {		// Key 3
+			Scene::currentScene = 2;
+			RV::reset();
+			std::cout << "Changing to scene 3" << std::endl;
+		}
+	}
+}
 
 void GLinit(int width, int height) {
 	glViewport(0, 0, width, height);
@@ -82,16 +122,14 @@ void GLinit(int width, int height) {
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
-	//TODO: CANVIAR PER ORTHO
 
 	Box::setupCube();
 	Axis::setupAxis();
 	Cube::setupCube();
 
-
-
+	lastWidth = width;
+	lastHeight = height;
 }
 
 void GLcleanup() {
@@ -115,31 +153,14 @@ void GLrender(double currentTime) {
 	Box::drawCube();
 	Axis::drawAxis();
 
-
-
 	// render code
 	Cube::drawCube();
 
-
 	ImGui::Render();
 
-
-	ImGuiIO& io = ImGui::GetIO();
-
-	//Detect keyboard controls
-	if (!io.WantCaptureKeyboard) {			//TODO: detectar només quan comences a apretar
-		if (io.KeysDown[49]) {
-			std::cout << "1 APRETAT" << std::endl;
-		}
-		if (io.KeysDown[50]) {
-			std::cout << "2 APRETAT" << std::endl;
-		}
-		if (io.KeysDown[51]) {
-			std::cout << "3 APRETAT" << std::endl;
-		}
-	}
+	Scene::detectInput();
 }
-
+//TODO: canviar segons convingui
 void GLResize(int width, int height) {
 	glViewport(0, 0, width, height);
 	if (height != 0) RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
@@ -248,9 +269,6 @@ namespace Cube {
 		20, 21, 22, 23, UCHAR_MAX
 	};
 
-
-
-
 	const char* cube_vertShader =
 		"#version 330\n\
 	in vec3 in_Position;\n\
@@ -324,7 +342,6 @@ void main() {\n\
 		glUseProgram(cubeProgram);
 		
 		
-
 		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
 		
 		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
@@ -375,7 +392,6 @@ void main() {\n\
 	}
 
 }
-
 
 namespace Axis {
 	GLuint AxisVao;
