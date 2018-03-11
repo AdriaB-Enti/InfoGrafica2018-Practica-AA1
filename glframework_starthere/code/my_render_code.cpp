@@ -102,6 +102,9 @@ namespace RV = RenderVars;
 
 namespace Scene {
 	void renderScene1() {
+		const float SCENE1MAXTRAVEL = 14;
+
+		//UI using ImGUI
 		ImGui::Begin("Scene #1");
 		if(travellingSpeed.x > 0)
 			ImGui::Text("Travelling Left");
@@ -110,7 +113,7 @@ namespace Scene {
 		ImGui::End();
 
 		//If camera reaches the "end" of scene, travelling moves to the opposite direction
-		if (RV::panv[0]+travellingSpeed.x > 14 || RV::panv[0] + travellingSpeed.x < -14)
+		if (RV::panv[0]+travellingSpeed.x > SCENE1MAXTRAVEL || RV::panv[0] + travellingSpeed.x < -SCENE1MAXTRAVEL)
 		{
 			travellingSpeed *= -1;
 		}
@@ -128,12 +131,30 @@ namespace Scene {
 	}
 
 	void renderScene2() {
-		ImGui::Begin("Scene #2");
-		ImGui::Text("Travelling + zoom");
-		ImGui::End();
+		const float SCENE2MAXTRAVEL	= -10.f;
+		const float SCENE2MAXZOOM	= glm::radians(57.f);
+
+		//If we zoomed too much, restart camera values
+		if (RV::currentFOV < SCENE2MAXZOOM)
+		{
+			RV::reset();
+		}
+
+		if (RV::panv[2] < SCENE2MAXTRAVEL)
+		{
+			RV::travelling(glm::vec3(0, 0, 0.05f)); //moving the "camera" into the scene
+			ImGui::Begin("Scene #2");
+			ImGui::Text("Travelling fordward");
+			ImGui::End();
+		}
+		else {
+			RV::changeFOV(glm::radians(-0.2f));		//changing FOV (zooming in)
+			ImGui::Begin("Scene #2");
+			ImGui::Text("Zooming in");
+			ImGui::End();
+		}
+
 		RV::_modelView = glm::mat4(1.f);
-		RV::travelling(glm::vec3(0, 0, 0.05f)); //moving the "camera" into the scene
-		RV::changeFOV(glm::radians(-0.2f));		//changing FOV (zooming in)
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
@@ -149,9 +170,11 @@ namespace Scene {
 		ImGui::Begin("Scene #3");
 		ImGui::Text("Dolly Effect");
 		ImGui::End();
-		RV::_modelView = glm::mat4(1.f);
+
 		RV::travelling(glm::vec3(0, 0, 0.03f)); //0.05 moving the "camera" into the scene
 		RV::changeFOV(glm::radians(0.175f));		//0.2
+
+		RV::_modelView = glm::mat4(1.f);
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
@@ -224,7 +247,7 @@ void GLrender(double currentTime) {
 		break;
 	case 2: Scene::renderScene3();
 		break;
-	default: //shouldn't happen
+	default: //Shouldn't happen
 		break;
 	}
 
@@ -433,16 +456,21 @@ void main() {\n\
 		glDisable(GL_PRIMITIVE_RESTART);
 	}
 	void drawDollyCubes() {
-		const std::array<glm::vec3, 9> cubePositions = { glm::vec3(-0.0f, 3.5f, 0.0f), glm::vec3(-2.0f, 0.5f, -1.0f), glm::vec3(2.0f, 0.5f, -1.0f),
+		const std::array<glm::vec3, 10> cubePositions = { glm::vec3(-0.0f, 3.5f, 0.0f), glm::vec3(-2.0f, 0.5f, -1.0f), glm::vec3(2.0f, 0.5f, -1.0f),
 			glm::vec3(-7.0f, 1.5f, -4.0f), glm::vec3(7.0f, 1.5f, -4.0f), glm::vec3(6.0f, 1.5f, 7.0f), glm::vec3(-6.0f, 1.5f, 7.0f),
-			glm::vec3(-13.0f, 3.5f, 0.0f), glm::vec3(13.0f, 3.5f, 0.0f), };
-		const std::array<glm::vec3, 9> cubeScales = { glm::vec3(2, 2, 2), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), 
+			glm::vec3(-13.0f, 3.5f, 0.0f), glm::vec3(13.0f, 3.5f, 0.0f), glm::vec3(0.0f, 0.5f, 4.5f) };
+		const std::array<glm::vec3, 10> cubeScales = { glm::vec3(2, 2, 2), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), 
 			glm::vec3(3, 3, 3) , glm::vec3(3, 3, 3), glm::vec3(2.5f, 1, 2), glm::vec3(2.5f, 1, 2),
-			glm::vec3(1, 11, 1), glm::vec3(1, 11, 1) };
+			glm::vec3(1, 11, 1), glm::vec3(1, 11, 1), glm::vec3(10, 1, 1) };
+		const std::array<glm::vec3, 10> cubeColors = { glm::vec3(0, 0, 1), glm::vec3(0, 0.5f, 0.5f), glm::vec3(0, 0.5f, 0.5f),
+			glm::vec3(1, 0, 0) , glm::vec3(1, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 1, 0),
+			glm::vec3(2, 2, 0), glm::vec3(2, 2, 0), glm::vec3(0.f, 0.5f, 1.f) };
 
 		glEnable(GL_PRIMITIVE_RESTART);
 		glBindVertexArray(cubeVao);
 		glUseProgram(cubeProgram);
+
+		//Iterate through each cube, set the position and scale, and pass the matrices and color to the shader
 		for (int i = 0; i < std::size(cubePositions); i++)
 		{
 			objMat = glm::translate(glm::mat4(1.0f), cubePositions[i]);
@@ -450,7 +478,8 @@ void main() {\n\
 			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
 			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
-			glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+			//glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+			glUniform4f(glGetUniformLocation(cubeProgram, "color"), cubeColors[i].r, cubeColors[i].g, cubeColors[i].b, 0.f);
 			glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
 		}
 		glUseProgram(0);
