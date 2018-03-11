@@ -26,8 +26,8 @@ namespace Cube {
 	void resetCubeMat();
 	void drawCube();
 	void drawScene1Cubes();
+	void drawScene2Cubes();
 	void drawDollyCubes();
-	void draw2Cubes(double currentTime);
 }
 namespace Axis {
 	void setupAxis();
@@ -46,7 +46,7 @@ namespace Scene {
 	void renderScene2();
 	void renderScene3();
 	void detectInput();
-	glm::vec3 travellingSpeed = glm::vec3(0.15f, 0, 0);
+	glm::vec3 travellingSpeed = glm::vec3(0.13f, 0, 0);	//travelling speed used in scene 1
 }
 
 //Values used for the projection view
@@ -103,7 +103,7 @@ namespace RV = RenderVars;
 
 namespace Scene {
 	void renderScene1() {
-		const float SCENE1MAXTRAVEL = 14;
+		const float SCENE1MAXTRAVEL = 12;
 
 		//UI using ImGUI
 		ImGui::Begin("Scene #1");
@@ -126,15 +126,14 @@ namespace Scene {
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
 		RV::_MVP = RV::_projection * RV::_modelView;
-		//Draw The big box, the axis and cube
+		//Draw The big box and cubes
 		Box::drawCube();
-		Axis::drawAxis();
 		Cube::drawScene1Cubes();
 	}
 
 	void renderScene2() {
-		const float SCENE2MAXTRAVEL	= -10.f;
-		const float SCENE2MAXZOOM	= glm::radians(57.f);
+		const float SCENE2MAXTRAVEL	= -10.f;				//first the "camera" moves into the scene, until it reaches a certain point
+		const float SCENE2MAXZOOM	= glm::radians(57.f);	//then we start zooming in, until the zoom reaches a certain value
 
 		//If we zoomed too much, restart camera values
 		if (RV::currentFOV < SCENE2MAXZOOM)
@@ -160,19 +159,22 @@ namespace Scene {
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
 		RV::_MVP = RV::_projection * RV::_modelView;
-		//Draw The big box, the axis and cubes
+		//Draw The big box and cubes
 		Box::drawCube();
-		Axis::drawAxis();
-		Cube::drawCube();
+		Cube::drawScene2Cubes();
 	}
 
 	void renderScene3() {
 		ImGui::Begin("Scene #3");
 		ImGui::Text("Dolly Effect");
 		ImGui::End();
+		if (glm::degrees(RV::currentFOV) > 170) //reset camera when FOV reaches a certain value
+		{
+			RV::reset();
+		}
 
-		RV::travelling(glm::vec3(0, 0, 0.03f)); //0.05 moving the "camera" into the scene
-		RV::changeFOV(glm::radians(0.175f));		//0.2
+		RV::travelling(glm::vec3(0, 0, 0.03f)); //moving the "camera" into the scene
+		RV::changeFOV(glm::radians(0.175f));	//zooming out
 
 		RV::_modelView = glm::mat4(1.f);
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
@@ -193,19 +195,19 @@ namespace Scene {
 			if (io.KeysDown[49] && Scene::currentScene != 0) {		// Key 1
 				Scene::currentScene = 0;
 				RV::reset();
-				Cube::resetCubeMat();
+				//Cube::resetCubeMat();
 				std::cout << "Changing to scene 1" << std::endl;
 			}
 			if (io.KeysDown[50] && Scene::currentScene != 1) {		// Key 2
 				Scene::currentScene = 1;
 				RV::reset();
-				Cube::resetCubeMat();
+				//Cube::resetCubeMat();
 				std::cout << "Changing to scene 2" << std::endl;
 			}
 			if (io.KeysDown[51] && Scene::currentScene != 2) {		// Key 3
 				Scene::currentScene = 2;
 				RV::reset();
-				Cube::resetCubeMat();
+				//Cube::resetCubeMat();
 				std::cout << "Changing to scene 3" << std::endl;
 			}
 		}
@@ -239,7 +241,7 @@ void GLcleanup() {
 void GLrender(double currentTime) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	switch (Scene::currentScene)
+	switch (Scene::currentScene)	//using the var currentScene, we render the right scene
 	{
 	case 0: Scene::renderScene1();
 		break;
@@ -442,24 +444,37 @@ void main() {\n\
 		glEnable(GL_PRIMITIVE_RESTART);
 		glBindVertexArray(cubeVao);
 		glUseProgram(cubeProgram);
-		
-		
 		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
-		
 		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
 		glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
 		glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
-
 		glUseProgram(0);
 		glBindVertexArray(0);
 		glDisable(GL_PRIMITIVE_RESTART);
 	}
 	void drawScene1Cubes() {
-		const std::array<glm::vec3, 3> cubePositions = { glm::vec3(-0.0f, 3.5f, 0.0f), glm::vec3(-2.0f, 0.5f, -1.0f), glm::vec3(2.0f, 0.5f, -1.0f)};
-		const std::array<glm::vec3, 3> cubeScales = { glm::vec3(2, 2, 2), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1) };
-		const std::array<glm::vec3, 3> cubeRotations = { glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0) };
-		const std::array<glm::vec3, 3> cubeColors = { glm::vec3(0, 0, 1), glm::vec3(0, 0.5f, 0.5f), glm::vec3(0, 0.5f, 0.5f) };
+		const std::array<glm::vec3, 14> cubePositions = { glm::vec3(0.0f, 1.15f, 0.0f), glm::vec3(0.0f, 2.95f, 0.0f), glm::vec3(-0.4f, 3.45f, 0.0f),
+			glm::vec3(0.0f, 3.60f, 0.0f), glm::vec3(-3.3f, 0.75f, 0.0f), glm::vec3(-8.3f, 0.75f, 0.0f), 
+			glm::vec3(-5.8f, 1.5f, 0), glm::vec3(-6.0f, 6.0f, 0), glm::vec3(-13.0f, 2.4f, 0.0f), glm::vec3(-13.0f, 6.4f, 0.0f),
+			glm::vec3(-13.0f, 8.8f, 0.0f), glm::vec3(-13.0f, 8.8f, 0.0f), glm::vec3(10.0f, 4.0f, 0.0f),
+			glm::vec3(10.0f, 1.5f, 0.0f) };
+		const std::array<glm::vec3, 14> cubeScales = { glm::vec3(1, 2.2f, 1), glm::vec3(1, 1, 1), glm::vec3(1.70f, 0.3f, 1),
+			glm::vec3(1.f, 0.6f, 1), glm::vec3(0.5f, 1.5f, 1.0f), glm::vec3(0.5f, 1.5f, 1.0f),
+			glm::vec3(6.0f, 0.7f, 1), glm::vec3(4.5f, 3.0f, 1), glm::vec3(1.50f, 5.0f, 1.0f), glm::vec3(0.2f, 3.0f, 1.0f),
+			glm::vec3(2.0f, 2.0f, 1.0f), glm::vec3(2.0f, 2.0f, 1.0f), glm::vec3(5.0f, 4.0f, 4.0f),
+			glm::vec3(7.5f, 2.8f, 4.0f) };
+		const std::array<glm::vec3, 14> cubeRotations = { glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), 
+			glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0),
+			glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0,0,0),
+			glm::vec3(0,0,1), glm::vec3(0,0,1), glm::vec3(0,0,0), 
+			glm::vec3(0,0,0) };
+		const std::array<glm::vec3, 14> cubeColors = { glm::vec3(0, 0, 1), glm::vec3(1, 0.82f, 0.725f), glm::vec3(1, 0, 0),
+			glm::vec3(1, 0, 0), glm::vec3(0.6f, 0.28f, 0), glm::vec3(0.6f, 0.28f, 0),
+			glm::vec3(0.6f, 0.28f, 0), glm::vec3(0, 0, 1), glm::vec3(1.0f, 1.0f, 1.0f),  glm::vec3(0.0f, 3.0f, 1.0f),
+			glm::vec3(0.0f, 3.0f, 1.0f), glm::vec3(0.0f, 3.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.6f, 0.28f, 0.0f) };
+		const std::array<float, 14> rotationAngles = {0,0,0, 0,0,0, 0,0,0,0, glm::radians(45.f), glm::radians(10.f),0,0 };
 
 		glEnable(GL_PRIMITIVE_RESTART);
 		glBindVertexArray(cubeVao);
@@ -468,8 +483,10 @@ void main() {\n\
 		//Iterate through each cube, set the position and scale, and pass the matrices and color to the shader
 		for (int i = 0; i < std::size(cubePositions); i++)
 		{
-			objMat = glm::rotate(glm::mat4(1.0f), 45.f, cubeRotations[i]);
+			objMat = glm::mat4(1.0f);
 			objMat = glm::translate(objMat, cubePositions[i]);
+			if (rotationAngles[i] != 0)
+				objMat = glm::rotate(objMat, rotationAngles[i], cubeRotations[i]);
 			objMat = glm::scale(objMat, cubeScales[i]);
 			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
 			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
@@ -482,6 +499,46 @@ void main() {\n\
 		glBindVertexArray(0);
 		glDisable(GL_PRIMITIVE_RESTART);
 	}
+
+	void drawScene2Cubes() {
+		const std::array<glm::vec3, 7> cubePositions = { glm::vec3(0.0f, 1.15f, 0.0f), glm::vec3(0.0f, 2.95f, 0.0f), glm::vec3(-0.4f, 3.45f, 0.0f),
+			glm::vec3(0.0f, 3.60f, 0.0f), glm::vec3(5.0f, 4.5f, -20.0f), glm::vec3(-5.0f, 4.5f, -20.0f),
+			glm::vec3(0.0f, 0.0f, 0.0f) };
+		const std::array<glm::vec3, 7> cubeScales = { glm::vec3(1, 2.2f, 1), glm::vec3(1, 1, 1), glm::vec3(1.70f, 0.3f, 1),
+			glm::vec3(1.f, 0.6f, 1), glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(2.0f, 2.0f, 2.0f),
+			glm::vec3(7.0f, 0.3f, 7.0f) };
+		const std::array<glm::vec3, 7> cubeRotations = { glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0),
+			glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), glm::vec3(1, 0, 0),
+			glm::vec3(0,0,0) };
+		const std::array<glm::vec3, 7> cubeColors = { glm::vec3(0, 0, 1), glm::vec3(1, 0.82f, 0.725f), glm::vec3(1, 0, 0),
+			glm::vec3(1, 0, 0), glm::vec3(0.0f, 2.0f, 0), glm::vec3(0.0f, 2.0f, 0),
+			glm::vec3(1.48f, 1.26f, 0) };
+		const std::array<float, 7> rotationAngles = { 0,0,0, 0,glm::radians(45.0f), glm::radians(45.0f), 0 };
+
+		glEnable(GL_PRIMITIVE_RESTART);
+		glBindVertexArray(cubeVao);
+		glUseProgram(cubeProgram);
+
+		//Iterate through each cube, set the position and scale, and pass the matrices and color to the shader
+		for (int i = 0; i < std::size(cubePositions); i++)
+		{
+			objMat = glm::mat4(1.0f);
+			objMat = glm::translate(objMat, cubePositions[i]);
+			if (rotationAngles[i] != 0)
+				objMat = glm::rotate(objMat, rotationAngles[i], cubeRotations[i]);
+			objMat = glm::scale(objMat, cubeScales[i]);
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
+			//glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+			glUniform4f(glGetUniformLocation(cubeProgram, "color"), cubeColors[i].r, cubeColors[i].g, cubeColors[i].b, 0.f);
+			glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+		}
+		glUseProgram(0);
+		glBindVertexArray(0);
+		glDisable(GL_PRIMITIVE_RESTART);
+	}
+
 	void drawDollyCubes() {
 		const std::array<glm::vec3, 10> cubePositions = { glm::vec3(-0.0f, 3.5f, 0.0f), glm::vec3(-2.0f, 0.5f, -1.0f), glm::vec3(2.0f, 0.5f, -1.0f),
 			glm::vec3(-7.0f, 1.5f, -4.0f), glm::vec3(7.0f, 1.5f, -4.0f), glm::vec3(6.0f, 1.5f, 7.0f), glm::vec3(-6.0f, 1.5f, 7.0f),
@@ -513,44 +570,6 @@ void main() {\n\
 		glBindVertexArray(0);
 		glDisable(GL_PRIMITIVE_RESTART);
 	}
-	//Draws two cubes
-	void Cube::draw2Cubes(double currentTime) {				//TODO: ESBORRAR---------------------------
-		glEnable(GL_PRIMITIVE_RESTART);
-		glBindVertexArray(cubeVao);
-		glUseProgram(cubeProgram);
-
-		glm::vec3 firstCubePos = glm::vec3(-1.0f, 2.0f, 3.0f);	//posició del primer cub
-		glm::vec3 secondCubePos = glm::vec3(-1.0f, 2.0f, 3.0f);
-		glm::mat4 t = glm::translate(glm::mat4(), firstCubePos);
-
-		objMat = t;
-
-		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
-		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
-		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
-		glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
-		glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
-
-		float sinValue = (0.5f + 0.5f*sin(2.0f*currentTime));	//valor obtingut usant el sinus que va de 0 al 1
-		glm::mat4 m = glm::mat4()*t;
-		//m = glm::translate(m, glm::vec3(0.0f, (sin(2 * currentTime))*3 , 0.0f));					//fa que pugi i baixi
-
-		m = glm::rotate(m, glm::radians(sinValue*360.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		m = glm::translate(m, secondCubePos);
-		//t = glm::scale(m, glm::vec3(1.0f, 1.0f, 1.0f)*(sinValue+1.0f));
-		objMat = m;
-		float red = 0.5f + 0.5f*sin(2 * currentTime);				//amb el *3 canviarè més ràpid. amb el *0.5f+0.5f fem que vagi de 0 a 1
-		glUniform4f(glGetUniformLocation(cubeProgram, "color"), red, 0.f, 0.f, 0.f);
-		glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
-		glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
-
-
-
-		glUseProgram(0);		//es com que ho posem a NULL
-		glBindVertexArray(0);
-		glDisable(GL_PRIMITIVE_RESTART);
-	}
-
 }
 
 namespace Axis {
