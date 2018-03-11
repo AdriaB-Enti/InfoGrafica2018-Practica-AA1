@@ -1,8 +1,8 @@
 ﻿  my_render_code.cpp
-d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(206): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
-d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(207): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
-d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(478): warning C4244: 'inicializando': conversión de 'double' a 'float'; posible pérdida de datos
-d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(486): warning C4244: 'inicializando': conversión de 'double' a 'float'; posible pérdida de datos
+d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(229): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
+d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(230): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
+d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(534): warning C4244: 'inicializando': conversión de 'double' a 'float'; posible pérdida de datos
+d:\documents\github\infografica2018-practica-aa1\glframework_starthere\code\my_render_code.cpp(542): warning C4244: 'inicializando': conversión de 'double' a 'float'; posible pérdida de datos
   GL_framework.vcxproj -> D:\Documents\GitHub\InfoGrafica2018-Practica-AA1\glframework_starthere\x64\Debug\GL_framework.exe
   0 archivo(s) copiado(s)
   0 archivo(s) copiado(s)

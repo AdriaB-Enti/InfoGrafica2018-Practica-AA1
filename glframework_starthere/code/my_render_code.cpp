@@ -25,6 +25,7 @@ namespace Cube {
 	void updateCube(const glm::mat4& transform);
 	void resetCubeMat();
 	void drawCube();
+	void drawScene1Cubes();
 	void drawDollyCubes();
 	void draw2Cubes(double currentTime);
 }
@@ -117,8 +118,9 @@ namespace Scene {
 		{
 			travellingSpeed *= -1;
 		}
-		RV::_modelView = glm::mat4(1.f);
 		RV::travelling(travellingSpeed);	//lateral travelling
+
+		RV::_modelView = glm::mat4(1.f);
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
@@ -127,7 +129,7 @@ namespace Scene {
 		//Draw The big box, the axis and cube
 		Box::drawCube();
 		Axis::drawAxis();
-		Cube::drawCube();
+		Cube::drawScene1Cubes();
 	}
 
 	void renderScene2() {
@@ -140,19 +142,17 @@ namespace Scene {
 			RV::reset();
 		}
 
+		ImGui::Begin("Scene #2");
 		if (RV::panv[2] < SCENE2MAXTRAVEL)
 		{
 			RV::travelling(glm::vec3(0, 0, 0.05f)); //moving the "camera" into the scene
-			ImGui::Begin("Scene #2");
 			ImGui::Text("Travelling fordward");
-			ImGui::End();
 		}
 		else {
 			RV::changeFOV(glm::radians(-0.2f));		//changing FOV (zooming in)
-			ImGui::Begin("Scene #2");
 			ImGui::Text("Zooming in");
-			ImGui::End();
 		}
+		ImGui::End();
 
 		RV::_modelView = glm::mat4(1.f);
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
@@ -160,7 +160,7 @@ namespace Scene {
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
 		RV::_MVP = RV::_projection * RV::_modelView;
-		//Draw The big box, the axis and cube
+		//Draw The big box, the axis and cubes
 		Box::drawCube();
 		Axis::drawAxis();
 		Cube::drawCube();
@@ -455,6 +455,33 @@ void main() {\n\
 		glBindVertexArray(0);
 		glDisable(GL_PRIMITIVE_RESTART);
 	}
+	void drawScene1Cubes() {
+		const std::array<glm::vec3, 3> cubePositions = { glm::vec3(-0.0f, 3.5f, 0.0f), glm::vec3(-2.0f, 0.5f, -1.0f), glm::vec3(2.0f, 0.5f, -1.0f)};
+		const std::array<glm::vec3, 3> cubeScales = { glm::vec3(2, 2, 2), glm::vec3(1, 1, 1), glm::vec3(1, 1, 1) };
+		const std::array<glm::vec3, 3> cubeRotations = { glm::vec3(0, 0, 0), glm::vec3(0, 0, 0), glm::vec3(0, 0, 0) };
+		const std::array<glm::vec3, 3> cubeColors = { glm::vec3(0, 0, 1), glm::vec3(0, 0.5f, 0.5f), glm::vec3(0, 0.5f, 0.5f) };
+
+		glEnable(GL_PRIMITIVE_RESTART);
+		glBindVertexArray(cubeVao);
+		glUseProgram(cubeProgram);
+
+		//Iterate through each cube, set the position and scale, and pass the matrices and color to the shader
+		for (int i = 0; i < std::size(cubePositions); i++)
+		{
+			objMat = glm::rotate(glm::mat4(1.0f), 45.f, cubeRotations[i]);
+			objMat = glm::translate(objMat, cubePositions[i]);
+			objMat = glm::scale(objMat, cubeScales[i]);
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
+			glUniformMatrix4fv(glGetUniformLocation(cubeProgram, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
+			//glUniform4f(glGetUniformLocation(cubeProgram, "color"), 0.1f, 1.f, 1.f, 0.f);
+			glUniform4f(glGetUniformLocation(cubeProgram, "color"), cubeColors[i].r, cubeColors[i].g, cubeColors[i].b, 0.f);
+			glDrawElements(GL_TRIANGLE_STRIP, numVerts, GL_UNSIGNED_BYTE, 0);
+		}
+		glUseProgram(0);
+		glBindVertexArray(0);
+		glDisable(GL_PRIMITIVE_RESTART);
+	}
 	void drawDollyCubes() {
 		const std::array<glm::vec3, 10> cubePositions = { glm::vec3(-0.0f, 3.5f, 0.0f), glm::vec3(-2.0f, 0.5f, -1.0f), glm::vec3(2.0f, 0.5f, -1.0f),
 			glm::vec3(-7.0f, 1.5f, -4.0f), glm::vec3(7.0f, 1.5f, -4.0f), glm::vec3(6.0f, 1.5f, 7.0f), glm::vec3(-6.0f, 1.5f, 7.0f),
@@ -487,7 +514,7 @@ void main() {\n\
 		glDisable(GL_PRIMITIVE_RESTART);
 	}
 	//Draws two cubes
-	void Cube::draw2Cubes(double currentTime) {				//potser s'hauria d'esborrar....
+	void Cube::draw2Cubes(double currentTime) {				//TODO: ESBORRAR---------------------------
 		glEnable(GL_PRIMITIVE_RESTART);
 		glBindVertexArray(cubeVao);
 		glUseProgram(cubeProgram);
