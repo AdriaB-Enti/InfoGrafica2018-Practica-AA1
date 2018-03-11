@@ -45,6 +45,7 @@ namespace Scene {
 	void renderScene2();
 	void renderScene3();
 	void detectInput();
+	glm::vec3 travellingSpeed = glm::vec3(0.15f, 0, 0);
 }
 
 //Values used for the projection view
@@ -101,8 +102,20 @@ namespace RV = RenderVars;
 
 namespace Scene {
 	void renderScene1() {
+		ImGui::Begin("Scene #1");
+		if(travellingSpeed.x > 0)
+			ImGui::Text("Travelling Left");
+		else
+			ImGui::Text("Travelling Right");
+		ImGui::End();
+
+		//If camera reaches the "end" of scene, travelling moves to the opposite direction
+		if (RV::panv[0]+travellingSpeed.x > 14 || RV::panv[0] + travellingSpeed.x < -14)
+		{
+			travellingSpeed *= -1;
+		}
 		RV::_modelView = glm::mat4(1.f);
-		RV::travelling(glm::vec3(0.06f, 0, 0));	//lateral travelling
+		RV::travelling(travellingSpeed);	//lateral travelling
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
@@ -115,6 +128,9 @@ namespace Scene {
 	}
 
 	void renderScene2() {
+		ImGui::Begin("Scene #2");
+		ImGui::Text("Travelling + zoom");
+		ImGui::End();
 		RV::_modelView = glm::mat4(1.f);
 		RV::travelling(glm::vec3(0, 0, 0.05f)); //moving the "camera" into the scene
 		RV::changeFOV(glm::radians(-0.2f));		//changing FOV (zooming in)
@@ -130,6 +146,9 @@ namespace Scene {
 	}
 
 	void renderScene3() {
+		ImGui::Begin("Scene #3");
+		ImGui::Text("Dolly Effect");
+		ImGui::End();
 		RV::_modelView = glm::mat4(1.f);
 		RV::travelling(glm::vec3(0, 0, 0.03f)); //0.05 moving the "camera" into the scene
 		RV::changeFOV(glm::radians(0.175f));		//0.2
@@ -138,7 +157,7 @@ namespace Scene {
 		RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
 		RV::_MVP = RV::_projection * RV::_modelView;
-		//Draw The big box, the axis and cube
+		//Draw The big box, the axis and cubes
 		Box::drawCube();
 		Axis::drawAxis();
 		Cube::drawDollyCubes();
